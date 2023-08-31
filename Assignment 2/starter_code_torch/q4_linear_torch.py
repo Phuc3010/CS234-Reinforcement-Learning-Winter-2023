@@ -1,4 +1,5 @@
 import torch
+import copy
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -35,7 +36,8 @@ class Linear(DQN):
 
         ##############################################################
         ################ YOUR CODE HERE (3-4 lines) ##################
-
+        self.q_network = nn.Linear(img_height*img_width*n_channels*self.config.state_history, num_actions)
+        self.target_network = copy.deepcopy(self.q_network)
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -61,7 +63,11 @@ class Linear(DQN):
 
         ##############################################################
         ################ YOUR CODE HERE - 3-5 lines ##################
-
+        state_flatten = state.flatten(start_dim=1)
+        if network == 'q_network':
+            out = self.q_network(state_flatten)
+        elif network == 'target_network':
+            out = self.target_network(state_flatten)
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -84,7 +90,7 @@ class Linear(DQN):
 
         ##############################################################
         ################### YOUR CODE HERE - 1-2 lines ###############
-
+        self.target_network = copy.deepcopy(self.q_network)
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -126,7 +132,9 @@ class Linear(DQN):
         # you may need this variable
         num_actions = self.env.num_actions()
         gamma = self.config.gamma
-
+        q_sample = rewards + (1-done_mask)*gamma*torch.max(target_q_values, dim=-1)[0] 
+        loss = torch.sum((q_sample-q_values.gather(-1, actions.unsqueeze(-1)))**2).squeeze(-1)
+        return loss
         ##############################################################
         ##################### YOUR CODE HERE - 3-5 lines #############
 
@@ -146,7 +154,7 @@ class Linear(DQN):
         """
         ##############################################################
         #################### YOUR CODE HERE - 1 line #############
-
+        self.optimizer = torch.optim.Adam(self.q_network.parameters())
         ##############################################################
         ######################## END YOUR CODE #######################
 
