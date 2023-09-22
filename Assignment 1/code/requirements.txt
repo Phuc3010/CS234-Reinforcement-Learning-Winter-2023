@@ -1,0 +1,4 @@
+gymnasium[toy_text]==0.27.0
+matplotlib
+numpy
+scipy
